@@ -27,7 +27,7 @@ Based on your observations, select the best option that accurately addresses the
 
     TYPE = 'Video-MCQ'
 
-    def __init__(self, dataset='MVBench', nframe=0, fps=-1):
+    def __init__(self, dataset='MVBench', nframe=0, fps=-1, **kwargs):
         self.type_data_list = {
             'Action Sequence': ('action_sequence.json',
                                 'your_data_path/star/Charades_v1_480/', 'video', True),  # has start & end
@@ -70,11 +70,135 @@ Based on your observations, select the best option that accurately addresses the
             'Counterfactual Inference': ('counterfactual_inference.json',
                                          'your_data_path/clevrer/video_validation/', 'video', False),
         }
+        self.num_samples = kwargs.get('num_samples', None)
         super().__init__(dataset=dataset, nframe=nframe, fps=fps)
 
     @classmethod
     def supported_datasets(cls):
         return ['MVBench']
+
+    # def prepare_dataset(self, dataset_name='MVBench', repo_id='OpenGVLab/MVBench'):
+    #     def check_integrity(pth):
+    #         data_file = osp.join(pth, f'{dataset_name}.tsv')
+
+    #         if not os.path.exists(data_file):
+    #             return False
+
+    #         if md5(data_file) != self.MD5:
+    #             return False
+
+    #         data = load(data_file)
+    #         for idx, item in data.iterrows():
+    #             if not osp.exists(osp.join(pth, item['prefix'], item['video'])):
+    #                 return False
+    #         return True
+
+    #     if modelscope_flag_set():
+    #         repo_id = 'modelscope/MVBench'
+
+    #     cache_path = get_cache_path(repo_id, branch='main')
+    #     if cache_path is not None and check_integrity(cache_path):
+    #         dataset_path = cache_path
+    #     else:
+    #         def unzip_hf_zip(pth):
+    #             pth = os.path.join(pth, 'video/')
+    #             for filename in os.listdir(pth):
+    #                 if filename.endswith('.zip'):
+    #                     # 构建完整的文件路径
+    #                     zip_path = os.path.join(pth, filename)
+
+    #                     # 解压 ZIP 文件
+    #                     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    #                         zip_ref.extractall(pth)
+
+    #         def generate_tsv(pth):
+    #             data_file = osp.join(pth, f'{dataset_name}.tsv')
+    #             if os.path.exists(data_file) and md5(data_file) == self.MD5:
+    #                 return
+    #             json_data_dir = os.path.join(pth, 'json')
+    #             self.data_list = []
+    #             for k, v in self.type_data_list.items():
+    #                 with open(os.path.join(json_data_dir, v[0]), 'r') as f:
+    #                     json_data = json.load(f)
+    #                 for data in json_data:
+    #                     if os.path.exists(os.path.join(pth, v[1].replace('your_data_path', 'video'), data['video'])):
+    #                         self.data_list.append({
+    #                             'task_type': k,
+    #                             'prefix': v[1].replace('your_data_path', 'video'),
+    #                             'data_type': v[2],
+    #                             'bound': v[3],
+    #                             'start': data['start'] if 'start' in data.keys() else None,
+    #                             'end': data['end'] if 'end' in data.keys() else None,
+    #                             'video': data['video'],
+    #                             'question': data['question'],
+    #                             'answer': data['answer'],
+    #                             'candidates': data['candidates']
+    #                         })
+    #                     else:
+    #                         print(
+    #                             'NTURGB-D zip file is removed according to MVBench, you can view it at '
+    #                             'https://huggingface.co/datasets/OpenGVLab/MVBench for detailed reason.'
+    #                         )
+    #                         raise Exception(
+    #                             f"{os.path.join(v[1].replace('your_data_path', 'video'), data['video'])} does not exist"
+    #                         )
+
+    #             data_df = pd.DataFrame(self.data_list)
+    #             data_df = data_df.assign(index=range(len(data_df)))
+    #             data_df.to_csv(data_file, sep='\t', index=False)
+
+    #         def move_files(pth):
+    #             src_folder = os.path.join(pth, 'video/data0613')
+    #             if not os.path.exists(src_folder):
+    #                 return
+    #             for subdir in os.listdir(src_folder):
+    #                 subdir_path = os.path.join(src_folder, subdir)
+    #                 if os.path.isdir(subdir_path):
+    #                     for subsubdir in os.listdir(subdir_path):
+    #                         subsubdir_path = os.path.join(subdir_path, subsubdir)
+    #                         if os.path.isdir(subsubdir_path):
+    #                             for item in os.listdir(subsubdir_path):
+    #                                 item_path = os.path.join(subsubdir_path, item)
+    #                                 target_folder = os.path.join(pth, 'video', subdir, subsubdir)
+    #                                 if not os.path.exists(target_folder):
+    #                                     os.makedirs(target_folder)
+    #                                 target_path = os.path.join(target_folder, item)
+    #                                 try:
+    #                                     shutil.move(item_path, target_path)
+    #                                 except Exception as e:
+    #                                     print(f"Error moving {item_path} to {target_path}: {e}")
+
+    #         if modelscope_flag_set():
+    #             from modelscope import dataset_snapshot_download
+    #             dataset_path = dataset_snapshot_download(dataset_id=repo_id, revision='master')
+    #         else:
+    #             hf_token = os.environ.get('HUGGINGFACE_TOKEN')
+    #             huggingface_hub.login(hf_token)
+    #             dataset_path = snapshot_download(repo_id=repo_id, repo_type='dataset')
+    #         unzip_hf_zip(dataset_path)
+    #         move_files(dataset_path)
+    #         generate_tsv(dataset_path)
+
+    #     data_file = osp.join(dataset_path, f'{dataset_name}.tsv')
+
+    #     self.decord_method = {
+    #         'video': self.read_video,
+    #         'gif': self.read_gif,
+    #         'frame': self.read_frame,
+    #     }
+
+    #     self.nframe = 8
+    #     self.frame_fps = 3
+
+    #     # transform
+    #     self.transform = T.Compose([
+    #         Stack(),
+    #         ToTorchFormatTensor()
+    #     ])
+
+    #     return dict(root=dataset_path, data_file=data_file)
+
+    # code by 4o, if NTURGB-D, then skip
 
     def prepare_dataset(self, dataset_name='MVBench', repo_id='OpenGVLab/MVBench'):
         def check_integrity(pth):
@@ -114,13 +238,18 @@ Based on your observations, select the best option that accurately addresses the
                 data_file = osp.join(pth, f'{dataset_name}.tsv')
                 if os.path.exists(data_file) and md5(data_file) == self.MD5:
                     return
+
                 json_data_dir = os.path.join(pth, 'json')
                 self.data_list = []
+
+                # 遍历 JSON 文件并加载数据
                 for k, v in self.type_data_list.items():
                     with open(os.path.join(json_data_dir, v[0]), 'r') as f:
                         json_data = json.load(f)
+
                     for data in json_data:
-                        if os.path.exists(os.path.join(pth, v[1].replace('your_data_path', 'video'), data['video'])):
+                        video_path = os.path.join(pth, v[1].replace('your_data_path', 'video'), data['video'])
+                        if os.path.exists(video_path):
                             self.data_list.append({
                                 'task_type': k,
                                 'prefix': v[1].replace('your_data_path', 'video'),
@@ -135,14 +264,22 @@ Based on your observations, select the best option that accurately addresses the
                             })
                         else:
                             print(
-                                'NTURGB-D zip file is removed according to MVBench, you can view it at '
-                                'https://huggingface.co/datasets/OpenGVLab/MVBench for detailed reason.'
+                                f"Skipping missing NTU RGB-D sample: {video_path}. "
+                                "You can view details at "
+                                "https://huggingface.co/datasets/OpenGVLab/MVBench."
                             )
-                            raise Exception(
-                                f"{os.path.join(v[1].replace('your_data_path', 'video'), data['video'])} does not exist"
-                            )
+                            # 跳过这个样本，不抛异常
+                            continue
 
+                # 将数据转换为 DataFrame
                 data_df = pd.DataFrame(self.data_list)
+
+                # 限制数据集大小
+                if self.num_samples is not None and isinstance(self.num_samples, int):
+                    print(f"Limiting dataset to first {self.num_samples} samples.")
+                    data_df = data_df.head(self.num_samples)
+
+                # 添加索引列，并保存为 TSV 文件
                 data_df = data_df.assign(index=range(len(data_df)))
                 data_df.to_csv(data_file, sep='\t', index=False)
 
@@ -437,7 +574,8 @@ Based on your observations, select the best option that accurately addresses the
 """
     TYPE = 'Video-MCQ'
 
-    def __init__(self, dataset='MVBench_MP4', nframe=0, fps=-1):
+    def __init__(self, dataset='MVBench_MP4', nframe=0, fps=-1, local_path=None, **kwargs):
+        self.local_path = local_path or os.environ.get('MVBENCH_MP4_LOCAL_PATH')
         super().__init__(dataset=dataset, nframe=nframe, fps=fps)
 
     @classmethod
@@ -460,43 +598,94 @@ Based on your observations, select the best option that accurately addresses the
                     return False
             return True
 
-        if modelscope_flag_set():
-            repo_id = 'modelscope/MVBench'
-
-        cache_path = get_cache_path(repo_id, branch='video')
-        if cache_path is not None and check_integrity(cache_path):
-            dataset_path = cache_path
-        else:
-            def generate_tsv(pth):
-                data_file = osp.join(pth, f'{dataset_name}.tsv')
-                if os.path.exists(data_file) and md5(data_file) == self.MP4_MD5:
-                    return
-                json_data_path = os.path.join(dataset_path, 'test.json')
-                json_data = load(json_data_path)
-                root_data_dict = json_data['root']
-                self.data_list = []
-                for k, v in json_data['meta'].items():
-                    for item in v:
-                        self.data_list.append({
-                            'task_type': k,
-                            'prefix': root_data_dict[k],
-                            'video': item['video'],
-                            'question': item['question'],
-                            'answer': item['answer'],
-                            'candidates': item['candidates']
-                        })
-                data_df = pd.DataFrame(self.data_list)
-                data_df = data_df.assign(index=range(len(data_df)))
-                data_df.to_csv(data_file, sep='\t', index=False)
-
-            if modelscope_flag_set():
-                from modelscope import dataset_snapshot_download
-                dataset_path = dataset_snapshot_download(dataset_id=repo_id, revision='video')
+        # 如果指定了本地路径，直接使用本地路径
+        if self.local_path and os.path.exists(self.local_path):
+            print(f"Using local dataset path: {self.local_path}")
+            dataset_path = self.local_path
+            
+            # 检查是否存在目标 TSV 文件
+            target_data_file = osp.join(dataset_path, f'{dataset_name}.tsv')
+            source_data_file = osp.join(dataset_path, 'MVBench.tsv')
+            
+            if os.path.exists(target_data_file):
+                print(f"Found existing target TSV file: {target_data_file}")
+            elif os.path.exists(source_data_file):
+                print(f"Found MVBench.tsv, copying to {dataset_name}.tsv")
+                # 将 MVBench.tsv 复制为 MVBench_MP4.tsv
+                import shutil
+                shutil.copy2(source_data_file, target_data_file)
+                print(f"Copied {source_data_file} to {target_data_file}")
             else:
-                hf_token = os.environ.get('HUGGINGFACE_TOKEN')
-                huggingface_hub.login(hf_token)
-                dataset_path = snapshot_download(repo_id=repo_id, repo_type='dataset', revision='video')
-            generate_tsv(dataset_path)
+                # 如果两个文件都不存在，尝试从 test.json 生成
+                def generate_tsv_from_local(pth):
+                    data_file = osp.join(pth, f'{dataset_name}.tsv')
+                    if os.path.exists(data_file):
+                        return
+                    
+                    # 检查是否存在 test.json 文件
+                    json_data_path = os.path.join(pth, 'test.json')
+                    if not os.path.exists(json_data_path):
+                        raise FileNotFoundError(f"Neither {dataset_name}.tsv nor MVBench.tsv nor test.json found in {pth}")
+                    
+                    json_data = load(json_data_path)
+                    root_data_dict = json_data['root']
+                    self.data_list = []
+                    for k, v in json_data['meta'].items():
+                        for item in v:
+                            self.data_list.append({
+                                'task_type': k,
+                                'prefix': root_data_dict[k],
+                                'video': item['video'],
+                                'question': item['question'],
+                                'answer': item['answer'],
+                                'candidates': item['candidates']
+                            })
+                    data_df = pd.DataFrame(self.data_list)
+                    data_df = data_df.assign(index=range(len(data_df)))
+                    data_df.to_csv(data_file, sep='\t', index=False)
+                    print(f"Generated TSV file: {data_file}")
+                
+                generate_tsv_from_local(dataset_path)
+        else:
+            # 原始的下载逻辑
+            if modelscope_flag_set():
+                repo_id = 'modelscope/MVBench'
+
+            cache_path = get_cache_path(repo_id, branch='video')
+            if cache_path is not None and check_integrity(cache_path):
+                dataset_path = cache_path
+            else:
+                def generate_tsv(pth):
+                    data_file = osp.join(pth, f'{dataset_name}.tsv')
+                    if os.path.exists(data_file) and md5(data_file) == self.MP4_MD5:
+                        return
+                    json_data_path = os.path.join(dataset_path, 'test.json')
+                    json_data = load(json_data_path)
+                    root_data_dict = json_data['root']
+                    self.data_list = []
+                    for k, v in json_data['meta'].items():
+                        for item in v:
+                            self.data_list.append({
+                                'task_type': k,
+                                'prefix': root_data_dict[k],
+                                'video': item['video'],
+                                'question': item['question'],
+                                'answer': item['answer'],
+                                'candidates': item['candidates']
+                            })
+                    data_df = pd.DataFrame(self.data_list)
+                    data_df = data_df.assign(index=range(len(data_df)))
+                    data_df.to_csv(data_file, sep='\t', index=False)
+
+                if modelscope_flag_set():
+                    from modelscope import dataset_snapshot_download
+                    dataset_path = dataset_snapshot_download(dataset_id=repo_id, revision='video')
+                else:
+                    hf_token = os.environ.get('HUGGINGFACE_TOKEN')
+                    if hf_token:
+                        huggingface_hub.login(hf_token)
+                    dataset_path = snapshot_download(repo_id=repo_id, repo_type='dataset', revision='video')
+                generate_tsv(dataset_path)
 
         data_file = osp.join(dataset_path, f'{dataset_name}.tsv')
 

@@ -108,3 +108,5 @@ from .qtunevl import (
     QTuneVL,
     QTuneVLChat,
 )
+
+from .video_tool_rl_gao import VideoRLQwen

@@ -21,10 +21,16 @@ mmbench_video_dataset = {
 
 mvbench_dataset = {
     'MVBench_8frame': partial(MVBench, dataset='MVBench', nframe=8),
+    'MVBench_8frame_5samples': partial(MVBench, dataset='MVBench', nframe=8, num_samples=5),
+    'MVBench_8frame_200samples': partial(MVBench, dataset='MVBench', nframe=8, num_samples=200),
     'MVBench_64frame': partial(MVBench, dataset='MVBench', nframe=64),
     # MVBench not support fps, but MVBench_MP4 does
     'MVBench_MP4_8frame': partial(MVBench_MP4, dataset='MVBench_MP4', nframe=8),
+    'MVBench_MP4_8frame_test': partial(MVBench_MP4, dataset='MVBench_MP4', nframe=8),
     'MVBench_MP4_1fps': partial(MVBench_MP4, dataset='MVBench_MP4', fps=1.0),
+    # Add local path support - 使用已缓存的HuggingFace数据集
+    'MVBench_MP4_Cached_8frame': partial(MVBench_MP4, dataset='MVBench_MP4', nframe=8, local_path='/workspace/Data/Benchmarks/huggingface/hub/datasets--OpenGVLab--MVBench/snapshots/230a2d4fac8900333c61754641c7a13e069ac9c6'),
+    'MVBench_MP4_Cached_1fps': partial(MVBench_MP4, dataset='MVBench_MP4', fps=1.0, local_path='/workspace/Data/Benchmarks/huggingface/hub/datasets--OpenGVLab--MVBench/snapshots/230a2d4fac8900333c61754641c7a13e069ac9c6'),
 }
 
 tamperbench_dataset = {
@@ -36,6 +42,11 @@ tamperbench_dataset = {
 videomme_dataset = {
     'Video-MME_8frame': partial(VideoMME, dataset='Video-MME', nframe=8),
     'Video-MME_64frame': partial(VideoMME, dataset='Video-MME', nframe=64),
+    'Video-MME_64frame_10sample': partial(VideoMME, dataset='Video-MME', nframe=64, num_samples=10),
+    'Video-MME_64frame_100sample': partial(VideoMME, dataset='Video-MME', nframe=64, num_samples=100),
+    'Video-MME_64frame_50sample': partial(VideoMME, dataset='Video-MME', nframe=64, num_samples=50),
+    'Video-MME_64frame_75sample': partial(VideoMME, dataset='Video-MME', nframe=64, num_samples=75),
+    'Video-MME_64frame_200sample': partial(VideoMME, dataset='Video-MME', nframe=64, num_samples=200),
     'Video-MME_8frame_subs': partial(VideoMME, dataset='Video-MME', nframe=8, use_subtitle=True),
     'Video-MME_1fps': partial(VideoMME, dataset='Video-MME', fps=1.0),
     'Video-MME_0.5fps': partial(VideoMME, dataset='Video-MME', fps=0.5),

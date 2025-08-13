@@ -10,7 +10,8 @@ class VideoBaseDataset:
                  dataset='MMBench-Video',
                  pack=False,
                  nframe=0,
-                 fps=-1):
+                 fps=-1,
+                 **kwargs):
         try:
             import decord
         except Exception as e:
@@ -18,7 +19,7 @@ class VideoBaseDataset:
             logging.critical('Please install decord via `pip install decord`.')
 
         self.dataset_name = dataset
-        ret = self.prepare_dataset(dataset)
+        ret = self.prepare_dataset(dataset, **kwargs)
         assert ret is not None
         lmu_root = LMUDataRoot()
         self.frame_root = osp.join(lmu_root, 'images', dataset)

@@ -3,6 +3,8 @@ from vlmeval.api import *
 from functools import partial
 import os
 
+from vlmeval.vlm.video_tool_rl_gao.video_tools.prompts import VTRL_SYSTEM_PROMPT_V5
+
 PandaGPT_ROOT = None
 MiniGPT4_ROOT = None
 TransCore_ROOT = None
@@ -1261,7 +1263,15 @@ qwen2vl_series = {
     ),
     "Qwen2.5-VL-7B-Instruct-ForVideo": partial(
         Qwen2VLChat,
-        model_path="Qwen/Qwen2.5-VL-7B-Instruct",
+        model_path="/workspace/model_zoo/qw2.5vl-7b-instruct/", #* changed to local
+        min_pixels=128 * 28 * 28,
+        max_pixels=768 * 28 * 28,
+        total_pixels=24576 * 28 * 28,
+        use_custom_prompt=False,
+    ),
+    "Qwen2.5-VL-7B-Instruct-ForVideo-vllm": partial(
+        Qwen2VLChat,
+        model_path="/workspace/model_zoo/qw2.5vl-7b-instruct/", #* changed to local
         min_pixels=128 * 28 * 28,
         max_pixels=768 * 28 * 28,
         total_pixels=24576 * 28 * 28,
@@ -1381,6 +1391,49 @@ qwen2vl_series = {
         use_custom_prompt=False,
         system_prompt=("You FIRST think about the reasoning process as an internal monologue and then provide the final answer.\nThe reasoning process MUST BE enclosed within <think> </think> tags. The final answer MUST BE enclosed within <answer> </answer> tags."
         ),
+    ),
+    #* videorl_tool
+    'VTRL-Qwen2.5VL-3B': partial(
+        VideoRLQwen,
+        model_path='/workspace/model_zoo/qw2.5vl-3b', #todo DONE: change into our model path
+        min_pixels=7 * 7 * 28 * 28,
+        max_pixels=14 * 14 * 28 * 28,
+        total_pixels=10 * 14 * 14 * 28 * 28,
+    ),
+    # '/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/huggingface/'
+    'VTRL-Qwen2.5VL-7B': partial(
+        VideoRLQwen,
+        # model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/huggingface/', #todo: change into our model path
+        model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/hf_merged/',
+        min_pixels=7 * 7 * 28 * 28,
+        max_pixels=14 * 14 * 28 * 28,
+        total_pixels=10 * 14 * 14 * 28 * 28,
+    ),
+    'VTRL-Qwen2.5VL-7B-lowresolution': partial(
+        VideoRLQwen,
+        # model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/huggingface/', #todo: change into our model path
+        model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/hf_merged/',
+        min_pixels=3136,
+        max_pixels=12544,
+        total_pixels=262144,
+    ),
+    'VTRL-Qwen2.5VL-7B-from_dummy': partial(
+        VideoRLQwen,
+        model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/', #todo: change into our model path
+        # model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/hf_merged/',
+        min_pixels=7 * 7 * 28 * 28,
+        max_pixels=14 * 14 * 28 * 28,
+        total_pixels=10 * 14 * 14 * 28 * 28,
+    ),
+    'VTRL-Qwen2.5VL-3B-V5-sft1k': partial(
+        VideoRLQwen,
+        model_path='/workspace/codes/DeepEyes/verl_checkpoints/vlagent_sft/0730/global_step_40/', #todo: change into our model path
+        # model_path='/workspace/codes/DeepEyes/verl_checkpoints/agent_vlagent_0717/debug_for_single_node_qw2_5vl-7b-instruct/global_step_8/actor/hf_merged/',
+        min_pixels=7 * 7 * 28 * 28,
+        max_pixels=14 * 14 * 28 * 28,
+        total_pixels=10 * 14 * 14 * 28 * 28,
+        system_prompt=VTRL_SYSTEM_PROMPT_V5,
+        tool_version="video_toolbox_v5"
     ),
 }
 

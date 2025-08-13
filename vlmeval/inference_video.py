@@ -105,6 +105,9 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
     # (In VLMEvalKit, we use torchrun to launch multiple model instances on a single node).
     # To bypass this problem, we unset `WORLD_SIZE` before building the model to not use TP parallel.
     ws_bak = os.environ.pop('WORLD_SIZE', None)
+    print(f'[DEBUG] [infer_data] [isinstance(model, str)]: {isinstance(model, str)}')
+    print(f'[DEBUG] [infer_data] [model_name]: {model_name}')
+    print(f'[DEBUG] [infer_data] [supported_VLM[model_name]] [type]: {type(supported_VLM[model_name])}')
     model = supported_VLM[model_name](**kwargs) if isinstance(model, str) else model
     if ws_bak:
         os.environ['WORLD_SIZE'] = ws_bak
@@ -165,6 +168,8 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
                 print(f'using {model_name} default setting for video, dataset.fps is ommitted')
         if 'SUB_DATASET' in dataset.data.iloc[sample_map[idx]]:
             dataset_name = dataset.data.iloc[sample_map[idx]]['SUB_DATASET']
+
+        print(f"[DEBUG] [infra_data] model.use_custom_prompt(dataset_name) {model.use_custom_prompt(dataset_name)} for dataset_name: {dataset_name}")
         if hasattr(model, 'use_custom_prompt') and model.use_custom_prompt(dataset_name):
             if dataset.nframe == 0:
                 raise ValueError(f'nframe must be set for custom prompt, fps is not suitable for {model_name}')
@@ -188,6 +193,9 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
                 warnings.error(f'{type(err)} {str(err)}')
                 response = f'{FAIL_MSG}: {type(err)} {str(err)}'
         else:
+            print(f'[DEBUG] [infer_data] [model.generate] struct: {struct}')
+            # [DEBUG] [infer_data] [model.generate] struct: 
+            # * [{'type': 'text', 'value': ''}, {'type': 'video', 'value': '/workspace/Data/Benchmarks/huggingface/hub/datasets--lmms-lab--Video-MME/snapshots/ead1408f75b618502df9a1d8e0950166bf0a2a0b/video/fFjv93ACGo8.mp4'}, {'type': 'text', 'value': '\nThese are the frames of a video. Select the best answer to the following multiple-choice question based on the video. Respond with only the letter (A, B, C, or D) of the correct option.\n'}, {'type': 'text', 'value': 'Question: When demonstrating the Germany modern Christmas tree is initially decorated with apples, candles and berries, which kind of the decoration has the largest number?\nA. Apples.\nB. Candles.\nC. Berries.\nD. The three kinds are of the same number.\nAnswer: '}]
             response = model.generate(message=struct, dataset=dataset_name)
         torch.cuda.empty_cache()
 

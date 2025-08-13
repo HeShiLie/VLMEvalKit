@@ -48,16 +48,124 @@ Respond with only the letter (A, B, C, or D) of the correct option.
 
     TYPE = 'Video-MCQ'
 
-    def __init__(self, dataset='Video-MME', use_subtitle=False, nframe=0, fps=-1):
+    def __init__(self, dataset='Video-MME', use_subtitle=False, nframe=0, fps=-1, **kwargs):
+        self.num_samples = kwargs.get('num_samples', None)
         super().__init__(dataset=dataset, nframe=nframe, fps=fps)
         self.use_subtitle = use_subtitle
         self.dataset_name = dataset
-
+        if self.num_samples is not None and isinstance(self.num_samples, int):
+            # print(f"[DEBUG] use {self.num_samples} samples from the dataset, dataset name changed to {self.dataset_name}_{self.num_samples}sample")
+            # self.data = self.data.sample(frac=1).reset_index(drop=True)
+            # indices = np.random.permutation(len(self.data))[:self.num_samples]
+            indices_sorted = np.sort(np.random.choice(len(self.data), size=self.num_samples, replace=False))
+            self.data = self.data.iloc[indices_sorted]
+            print(f"[DEBUG] dataset size: {len(self.data)}")
+            
     @classmethod
     def supported_datasets(cls):
         return ['Video-MME']
 
-    def prepare_dataset(self, dataset_name='Video-MME', repo_id='lmms-lab/Video-MME'):
+    # def prepare_dataset(self, dataset_name='Video-MME', repo_id='lmms-lab/Video-MME'):
+
+    #     def check_integrity(pth):
+    #         data_file = osp.join(pth, f'{dataset_name}.tsv')
+
+    #         if not os.path.exists(data_file):
+    #             return False
+
+    #         if md5(data_file) != self.MD5:
+    #             return False
+    #         data = load(data_file)
+    #         for video_pth in data['video_path']:
+    #             if not osp.exists(osp.join(pth, video_pth)):
+    #                 return False
+    #         return True
+
+    #     cache_path = get_cache_path(repo_id)
+    #     if cache_path is not None and check_integrity(cache_path):
+    #         dataset_path = cache_path
+    #     else:
+
+    #         def unzip_hf_zip(pth):
+    #             import zipfile
+    #             base_dir = pth
+    #             target_dir = os.path.join(pth, 'video/')
+    #             zip_files = [
+    #                 os.path.join(base_dir, file) for file in os.listdir(base_dir)
+    #                 if file.endswith('.zip') and file.startswith('video')
+    #             ]
+    #             zip_files.sort()
+
+    #             if not os.path.exists(target_dir):
+    #                 os.makedirs(target_dir, exist_ok=True)
+    #                 for zip_file in zip_files:
+    #                     with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+    #                         for member in zip_ref.namelist():
+    #                             # Check if the member is a file (not a directory)
+    #                             if not member.endswith('/'):
+    #                                 # Extract the file to the specified directory
+    #                                 source = zip_ref.open(member)
+    #                                 target = open(os.path.join(target_dir, os.path.basename(member)), 'wb')
+    #                                 with source, target:
+    #                                     target.write(source.read())
+    #                 print('The video file has been restored and stored from the zip file.')
+    #             else:
+    #                 print('The video file already exists.')
+
+    #             subtitle_zip_file = os.path.join(base_dir, 'subtitle.zip')
+    #             subtitle_target_dir = os.path.join(base_dir, 'subtitle')
+
+    #             if not os.path.exists(subtitle_target_dir):
+    #                 os.makedirs(subtitle_target_dir, exist_ok=True)
+    #                 with zipfile.ZipFile(subtitle_zip_file, 'r') as zip_ref:
+    #                     for member in zip_ref.namelist():
+    #                         # Check if the member is a file (not a directory)
+    #                         if not member.endswith('/'):
+    #                             # Extract the file to the specified directory
+    #                             source = zip_ref.open(member)
+    #                             target = open(os.path.join(subtitle_target_dir, os.path.basename(member)), 'wb')
+    #                             with source, target:
+    #                                 target.write(source.read())
+    #                 print('The subtitle file has been restored and stored from the zip file.')
+    #             else:
+    #                 print('The subtitle file already exists.')
+
+    #         def generate_tsv(pth):
+
+    #             data_file = osp.join(pth, f'{dataset_name}.tsv')
+    #             if os.path.exists(data_file) and md5(data_file) == self.MD5:
+    #                 return
+
+    #             data_file = pd.read_parquet(os.path.join(pth, 'videomme/test-00000-of-00001.parquet'))
+    #             data_file = data_file.assign(index=range(len(data_file)))
+    #             data_file['video'] = data_file['videoID']
+    #             data_file['video_path'] = data_file['videoID'].apply(lambda x: f'./video/{x}.mp4')
+    #             data_file['subtitle_path'] = data_file['videoID'].apply(lambda x: f'./subtitle/{x}.srt')
+    #             data_file['candidates'] = data_file['options'].apply(lambda x: x.tolist())
+
+    #             data_file = data_file[['index', 'video', 'video_path', 'duration', 'domain', 'candidates',
+    #                                    'sub_category', 'task_type', 'subtitle_path', 'question', 'answer']]
+
+    #             data_file.to_csv(osp.join(pth, f'{dataset_name}.tsv'), sep='\t', index=False)
+
+    #         if modelscope_flag_set():
+    #             from modelscope import dataset_snapshot_download
+    #             dataset_path = dataset_snapshot_download(dataset_id=repo_id)
+    #         else:
+    #             dataset_path = snapshot_download(repo_id=repo_id, repo_type='dataset')
+    #         unzip_hf_zip(dataset_path)
+    #         generate_tsv(dataset_path)
+
+    #     data_file = osp.join(dataset_path, f'{dataset_name}.tsv')
+
+    #     return dict(data_file=data_file, root=dataset_path)
+    def prepare_dataset(self, dataset_name='Video-MME', repo_id='lmms-lab/Video-MME', **kwargs):
+
+        num_samples = kwargs.get('num_samples', None)
+
+        if num_samples is not None and isinstance(num_samples, int):
+            dataset_name = dataset_name+f'_{num_samples}sample'
+            print(f"[DEBUG] use {num_samples} samples from the dataset, dataset name changed to {dataset_name}")
 
         def check_integrity(pth):
             data_file = osp.join(pth, f'{dataset_name}.tsv')
@@ -123,7 +231,6 @@ Respond with only the letter (A, B, C, or D) of the correct option.
                     print('The subtitle file already exists.')
 
             def generate_tsv(pth):
-
                 data_file = osp.join(pth, f'{dataset_name}.tsv')
                 if os.path.exists(data_file) and md5(data_file) == self.MD5:
                     return
@@ -136,7 +243,12 @@ Respond with only the letter (A, B, C, or D) of the correct option.
                 data_file['candidates'] = data_file['options'].apply(lambda x: x.tolist())
 
                 data_file = data_file[['index', 'video', 'video_path', 'duration', 'domain', 'candidates',
-                                       'sub_category', 'task_type', 'subtitle_path', 'question', 'answer']]
+                                    'sub_category', 'task_type', 'subtitle_path', 'question', 'answer']]
+
+                # 如果设置了 self.num_samples，则随机抽样
+                if self.num_samples is not None and isinstance(self.num_samples, int):
+                    print(f"Randomly sampling {self.num_samples} samples from the dataset.")
+                    data_file = data_file.sample(n=self.num_samples, random_state=42)
 
                 data_file.to_csv(osp.join(pth, f'{dataset_name}.tsv'), sep='\t', index=False)
 
@@ -150,7 +262,7 @@ Respond with only the letter (A, B, C, or D) of the correct option.
 
         data_file = osp.join(dataset_path, f'{dataset_name}.tsv')
 
-        return dict(data_file=data_file, root=dataset_path)
+        return dict(data_file=data_file, root=dataset_path)    
 
     def save_video_frames(self, video, video_llm=False):
 

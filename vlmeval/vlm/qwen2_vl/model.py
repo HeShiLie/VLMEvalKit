@@ -244,6 +244,8 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
         max_gpu_mem = max(gpu_mems) if gpu_mems != [] else -1
         assert max_gpu_mem > 0
         self.use_vllm = kwargs.get('use_vllm', False)
+        print(f'[DEBUG] [qwen2vl.model.py] Using vLLM: {self.use_vllm}')
+        self.use_vllm_but_no_init = kwargs.get('use_vllm_but_no_init', False)
         self.use_lmdeploy = kwargs.get('use_lmdeploy', False)
         self.limit_mm_per_prompt = VLLM_MAX_IMAGE_INPUT_NUM
         assert self.use_vllm + self.use_lmdeploy <= 1, "You can only set one flag between `use_vllm` and `use_lmdeploy` to True"  # noqa: E501
@@ -268,6 +270,7 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
                     'VLLM_WORKER_MULTIPROC_METHOD is not set to spawn.'
                     'Use \'export VLLM_WORKER_MULTIPROC_METHOD=spawn\' to avoid potential multi-process issues'
                 )
+            print(f'[DEBUG] [qwen2vl.model.py] Using vLLM for {self.model_path} inference with {tp_size} GPUs (available: {gpu_count})')
             self.llm = LLM(
                 model=self.model_path,
                 max_num_seqs=5,
@@ -276,6 +279,8 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
                 tensor_parallel_size=tp_size,
                 gpu_memory_utilization=kwargs.get("gpu_utils", 0.9),
             )
+            print(f'[DEBUG] [qwen2vl.model.py] SUCCESSFULLY vllm initialized')
+
 
         elif self.use_lmdeploy:
             from lmdeploy import TurbomindEngineConfig, pipeline, ChatTemplateConfig
@@ -286,10 +291,14 @@ class Qwen2VLChat(Qwen2VLPromptMixin, BaseModel):
                 chat_template_config=ChatTemplateConfig(model_name='qwen2d5-vl'))
             torch.cuda.set_device(0)
             self.device = 'cuda'
+        elif self.use_vllm_but_no_init:
+            pass
         else:
+            print(f'[DEBUG] [qwen2vl.model.py] Using hf.tansformers')
             self.model = MODEL_CLS.from_pretrained(
                 model_path, torch_dtype='auto', device_map="auto", attn_implementation='flash_attention_2'
             )
+            print(f'[DEBUG] [qwen2vl.model.py] hf.tansformers SUCCESSFULLY initialized')
             self.model.eval()
 
         torch.cuda.empty_cache()
