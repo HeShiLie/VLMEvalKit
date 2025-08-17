@@ -401,7 +401,7 @@ class ParallelEnv:
                 current_kwargs['video_path'] = current_sample_video_path
                 current_kwargs['question'] = current_sample_question
                 current_kwargs['tools_call_state_list'] = self.tools_call_state_list[agi['valid_idx']]
-                print('hhhhhhh', current_kwargs['tools_call_state_list'], 'RANK: ',os.environ.get('RANK', 'no'))
+                print('hhhhhhh', current_kwargs['tools_call_state_list'], 'RANK: ', os.environ.get('RANK', 'no'))
 
                 obs, reward, done, info = execute_tool_call(agi, self.tokenizer, self.processor, pbar=pbar, **current_kwargs) #! this info is only use to check
 

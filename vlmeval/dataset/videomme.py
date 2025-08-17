@@ -2,6 +2,7 @@ from huggingface_hub import snapshot_download
 from ..smp import *
 from .video_base import VideoBaseDataset
 from .utils import build_judge, DEBUG_MESSAGE
+from ..utils.video_utils import safe_frame_to_numpy
 
 FAIL_MSG = 'Failed to obtain answer via API.'
 
@@ -291,11 +292,23 @@ Respond with only the letter (A, B, C, or D) of the correct option.
             lock_path = osp.splitext(vid_path)[0] + '.lock'
             with portalocker.Lock(lock_path, 'w', timeout=30):
                 if not np.all([osp.exists(p) for p in frame_paths]):
-                    images = [vid[i].asnumpy() for i in indices]
-                    images = [Image.fromarray(arr) for arr in images]
+                    # 使用安全的帧转换函数，兼容不同版本
+                    images = []
+                    for i in indices:
+                        frame = vid[i]
+                        frame_array = safe_frame_to_numpy(frame)
+                        images.append(Image.fromarray(frame_array))
+                    
                     for im, pth in zip(images, frame_paths):
                         if not osp.exists(pth):
                             im.save(pth)
+                    # 清理内存
+                    del images
+
+        # 明确释放video reader对象
+        del vid
+        import gc
+        gc.collect()
 
         return frame_paths, indices, video_info
 

@@ -1242,7 +1242,7 @@ qwen2vl_series = {
     ),
     "Qwen2.5-VL-3B-Instruct": partial(
         Qwen2VLChat,
-        model_path="Qwen/Qwen2.5-VL-3B-Instruct",
+        model_path="/workspace/model_zoo/qw2.5vl-3b/",
         min_pixels=1280 * 28 * 28,
         max_pixels=16384 * 28 * 28,
         use_custom_prompt=False,

@@ -280,6 +280,7 @@ class VideoRLQwen(Qwen2VLChat):
         """
         from vllm import SamplingParams
         from .video_tools.inference_loop import agent_rollout_loop
+        from vlmeval.utils.memory_utils import MemoryMonitor, force_memory_cleanup
 
         try:
             from qwen_vl_utils import process_vision_info
@@ -287,12 +288,13 @@ class VideoRLQwen(Qwen2VLChat):
             logging.critical("qwen_vl_utils not found, please install it via 'pip install qwen-vl-utils'")
             raise err
 
-        batch_inputs = []
-        batch_results = []
+        with MemoryMonitor("Batch Generation", verbose=True):
+            batch_inputs = []
+            batch_results = []
 
-        prompts_list = []
+            prompts_list = []
 
-        print(f"[DEBUG] {len(messages_list)=} messages to process in batch")
+            print(f"[DEBUG] {len(messages_list)=} messages to process in batch")
         
         for i, (message, dataset) in enumerate(zip(messages_list, dataset_list or [None] * len(messages_list))):
             try:
@@ -525,6 +527,16 @@ class VideoRLQwen(Qwen2VLChat):
         results = ["Failed to process"] * len(messages_list)
         for idx, output in zip(valid_indices, outputs):
             results[idx] = output
+        
+        # 清理内存
+        del batch_inputs, valid_vllm_inputs, outputs
+        if 'prompts_dataproto' in locals():
+            del prompts_dataproto
+        if 'batch_prompts' in locals():
+            del batch_prompts
+        if 'original_prompts_list' in locals():
+            del original_prompts_list
+        force_memory_cleanup(verbose=True)
             
         if self.verbose:
             for i, result in enumerate(results):
@@ -636,6 +648,15 @@ class VideoRLQwen(Qwen2VLChat):
                 output_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=False
             )
             response = out
+            
+            # 清理视频相关的内存
+            del videos, videos_nd, vllm_inputs, prompts, output_tokens
+            if 'non_tensor_batch' in locals():
+                del non_tensor_batch
+            torch.cuda.empty_cache()
+            import gc
+            gc.collect()
+            
             print(f'[DEBUG] [video_tool_rl.py] response: {response}')
             return response
         else:
@@ -669,4 +690,18 @@ class VideoRLQwen(Qwen2VLChat):
 
         if self.verbose:
             print(f'\033[32m{generated_text}\033[0m')
+        
+        # 清理内存
+        if 'images' in locals():
+            del images
+        if 'videos' in locals():
+            del videos
+        if 'text' in locals():
+            del text
+        if 'messages' in locals():
+            del messages
+        torch.cuda.empty_cache()
+        import gc
+        gc.collect()
+        
         return generated_text

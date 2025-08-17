@@ -177,6 +177,12 @@ def batch_infer_with_vllm(model, model_name, dataset, sample_indices_subrem,
                 if verbose:
                     print(f"[BATCH] idx {idx}: {response}", flush=True)
             
+            # 清理批量数据
+            del batch_structs, batch_dataset_names, responses
+            torch.cuda.empty_cache()
+            import gc
+            gc.collect()
+            
             # 定期保存结果
             if (batch_num + 1) % 5 == 0 or batch_num == len(batches) - 1:
                 dump(res, out_file)
@@ -245,7 +251,11 @@ def serial_infer_data(model, model_name, dataset, sample_indices_subrem,
             print(f"Failed to process sample {idx}: {e}")
             response = f"{FAIL_MSG}: {type(e)} {str(e)}"
         
+        # 清理内存
+        del struct
         torch.cuda.empty_cache()
+        import gc
+        gc.collect()
 
         if verbose:
             print(f"idx {idx}: {response}", flush=True)
